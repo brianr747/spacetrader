@@ -39,3 +39,7 @@ get transferred back to the "agent_based_macro" project, which could then be use
 to develop more "serious" simulations.
 
 Will add more documentation if it works...
+
+(I will look into adding a open source license if this thing is viable.)
+
+(c) 2021 Brian Romanchuk
