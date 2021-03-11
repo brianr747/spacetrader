@@ -3,10 +3,13 @@ Space Trader Game using agent_based_macro model.
 
 This is supposed to evolve into a space-trading game. 
 
-Still have not closed the economy loop, so it does not do much.
+I still have not closed the economy loop, so it does not do much.
+
+Note that I have separated this project from agent_based_macro, and unfortunately, I need
+to switch projects to push commits. It is extremely likely that the two projects will
+get out of sync during this initial framework setup.
 
 **Version 0.1 Plan**
-
 In case anyone is excited about a sophisticated economic simulation, it will take patience.
 At present, the program works. However, the gameplay current consists of ... pausing and
 unpausing the simulation.
@@ -31,7 +34,7 @@ government running a Job Guarantee.
 minimum required to create a closed economy loop. (Closing the economy means that
   there are sources and sinks for all the commodities and money, and the economy
   will evolve to something resembling a steady state without requiring intervention.)
-
+  
 That is a non-trivial amount of work, but of course, it's almost entirely invisible.
 
 Once completed, the economic simulation would be the bare bones minimum one that could

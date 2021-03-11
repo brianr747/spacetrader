@@ -8,7 +8,7 @@ def main():
 
     pygame.init()
     screen = pygame.display.set_mode((640, 480))
-    pygame.display.set_caption("Space Trader!!!!!")
+    pygame.display.set_caption("Space Trader!!LOL!!")
     background = pygame.Surface(screen.get_size())
     background = background.convert()
     background.fill((0,0,0))

@@ -51,8 +51,12 @@ class SpaceSimulation(base_simulation.BaseSimulation):
             obj = base_simulation.Location(loc)
             self.AddLocation(obj)
             num_workers = 80
-            JG = base_simulation.JobGuarantee(obj.GID, self.CentralGovernmentID, num_workers=num_workers)
+            JG = base_simulation.JobGuarantee(obj.GID, self.CentralGovernmentID, job_guarantee_wage=100,
+                                              num_workers=num_workers)
             self.AddEntity(JG)
+            HH = base_simulation.HouseholdSector(obj.GID, money_balance=num_workers*10000,
+                                                 target_money=num_workers*9900)
+            self.AddHousehold(HH)
         commodities = ('Fud', 'Consumer Goods')
         for com in commodities:
             obj = simulation.Entity(com, 'commodity')
