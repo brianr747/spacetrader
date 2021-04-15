@@ -7,6 +7,18 @@ from agent_based_macro import clientserver as clientserver
 class MsgQuery(clientserver.ClientServerMsg):
     def ServerCommand(self, server, *args):
         """
+        This class implements the protocol for passing messages between client and server. Both the client and
+        server use this class, so that everything is mirrored in one place.
+
+        Since I am not yet using an actual client-server framework, this methodology looks silly and is inefficent.
+        However, if I jumble the client and server code together, so way to disentangle them later.
+
+        At the time of writing (2021-04-14), the protocol is too simple: I just have nested if's based on parsing
+        the text of the message. This will be replaced with a more elegant solution that is less spaghetti-like,
+        but since there are so few message types, there is no need to over-design it yet.
+
+        It will also need a way for Entity objects to mirror their state between clients and server, but once again,
+        I want to do the simplest version until it is absolutely necessary to go for the more complex code solution.
 
         :param server: simulation.Simulation
         :return:
