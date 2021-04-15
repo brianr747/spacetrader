@@ -16,6 +16,7 @@ def main():
     client.SendCommand(agent_based_macro.clientserver.MsgTimeQuery())
     client.SendCommand(simulation_build.MsgQuery('entities'))
     client.SendCommand(simulation_build.MsgQuery('locations'))
+    client.SendCommand(simulation_build.MsgQuery('getship'))
     font = pygame.font.SysFont(pygame.font.get_default_font(), 20)
     # Paused is fixed text
     label_paused = font.render('Game Paused', True, (255, 255, 0))

@@ -17,6 +17,8 @@ class MsgQuery(clientserver.ClientServerMsg):
             if self.args[0] == 'locations':
                 out = MsgQuery('locations',
                                [f'{server.GetEntity(x).GID}: {server.GetEntity(x).Name}' for x in server.Locations])
+            if self.args[0] == 'getship':
+                out = MsgQuery('getship', [f'{server.ShipGID}',])
         else:
             out = MsgQuery('Uknown query', [])
         out.ClientID = self.ClientID
@@ -28,7 +30,9 @@ class MsgQuery(clientserver.ClientServerMsg):
             print(payload)
         if querytype == 'locations':
             client.LocationList = payload
-
+        if querytype == 'getship':
+            client.ShipGID = int(payload[0])
+            print('Ship GID:', client.ShipGID)
 
 
 class GameClient(simulation.Client):
@@ -38,17 +42,28 @@ class GameClient(simulation.Client):
         self.Time = None
         self.EntityList = []
         self.LocationList = []
+        self.ShipGID = None
+
 
 class SpaceSimulation(base_simulation.BaseSimulation):
+    def __init__(self):
+        super().__init__()
+        self.ShipGID = None
+
     def Setup(self):
         """
         Set up the galaxy.
         :return:
         """
         # Eventually, create Planet Entity's with more information like (x,y) position (x,y,z!)
-        locations = ('Orth', 'Lave')
-        for loc in locations:
-            obj = base_simulation.Location(loc)
+        locations = (('Orth', (0.,0.)),
+                     ('Lave', (1., 0.)))
+        name_lookup = {}
+
+        for loc, coords in locations:
+            obj = base_simulation.Planet(loc, coords)
+            # Temporarily store planet names for setup
+            name_lookup[loc] = obj
             self.AddLocation(obj)
             num_workers = 80
             JG = base_simulation.JobGuarantee(obj.GID, self.CentralGovernmentID, job_guarantee_wage=100,
@@ -70,7 +85,20 @@ class SpaceSimulation(base_simulation.BaseSimulation):
                 ent = simulation.Entity.GetEntity(ent_id)
                 if ent.Type == 'JobGuarantee':
                     ent.FindEmployers()
-
+        # Space is a "nonlocation": the ID to be used for anything (ships) that are not at a logical
+        # location.
+        space = base_simulation.Location('Space')
+        self.AddLocation(space)
+        self.NonLocationID = space.GID
+        # Add a ship
+        orth = name_lookup["Orth"]
+        # This looks strange, but we say that we start at Orth and are heading to Orth. Loter on,
+        # may need to spawn ships in transit, so need the flexibility
+        ship = base_simulation.TravellingAgent('ship', orth.Coordinates, orth.GID,
+                                               travelling_to_ID=orth.GID)
+        self.AddEntity(ship)
+        # This is a bit of a hack
+        self.ShipGID = ship.GID
 
 
 
