@@ -16,7 +16,9 @@ def main():
     client.SendCommand(agent_based_macro.clientserver.MsgTimeQuery())
     client.SendCommand(simulation_build.MsgQuery('entities'))
     client.SendCommand(simulation_build.MsgQuery('locations'))
+    # One time queries to get the ship ID, and the ID for space ("non-location")
     client.SendCommand(simulation_build.MsgQuery('getship'))
+    client.SendCommand(simulation_build.MsgQuery('getspace'))
     font = pygame.font.SysFont(pygame.font.get_default_font(), 20)
     # Paused is fixed text
     label_paused = font.render('Game Paused', True, (255, 255, 0))
@@ -39,6 +41,7 @@ def main():
                 elif event.key == pygame.K_ESCAPE:
                     # Quick termination useful in debugging...
                     keepGoing = False
+        client.ProcessingStep()
         # Allow up to 5 processing steps within a loop <?>
         frames_since_time += 1
         if frames_since_time >= 5:
@@ -46,8 +49,10 @@ def main():
             frames_since_time = 0
         frames_since_time_query += 1
         if frames_since_time_query >= 11:
+            frames_since_time_query = 0
             client.SendCommand(agent_based_macro.clientserver.MsgTimeQuery())
-        for i in range(0,5):
+            client.ProcessingStep()
+        for i in range(0,10):
             did_anything = sim.Process()
             if not did_anything:
                 break

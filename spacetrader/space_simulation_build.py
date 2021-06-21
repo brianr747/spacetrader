@@ -1,3 +1,6 @@
+
+import ast
+
 from agent_based_macro import simulation as simulation
 
 from agent_based_macro import base_simulation as base_simulation
@@ -24,28 +27,41 @@ class MsgQuery(clientserver.ClientServerMsg):
         :return:
         """
         if len(self.args) > 0:
-            if self.args[0] == 'entities':
+            if self.args[0] == 'getinfo':
+                ent = server.GetEntity(int(args[1]))
+                info = ent.GetRepresentation()
+                out = MsgQuery('getinfo', info.__repr__())
+            elif self.args[0] == 'entities':
                 out = MsgQuery('entities', [f'{x.GID}: {x.Name} {x.Type}' for x in server.EntityList])
-            if self.args[0] == 'locations':
+            elif self.args[0] == 'locations':
                 out = MsgQuery('locations',
                                [f'{server.GetEntity(x).GID}: {server.GetEntity(x).Name}' for x in server.Locations])
-            if self.args[0] == 'getship':
-                out = MsgQuery('getship', [f'{server.ShipGID}',])
+            elif self.args[0] == 'getship':
+                out = MsgQuery('getship', [f'{server.ShipGID}', ])
+            elif self.args[0] == 'getspace':
+                out = MsgQuery('getspace', [f'{server.NonLocationID}', ])
+            else:
+                out = MsgQuery('Uknown query', [])
         else:
             out = MsgQuery('Uknown query', [])
         out.ClientID = self.ClientID
         server.QueueMessage(out)
 
     def ClientMessage(self, client, querytype, payload):
+        if querytype == 'getinfo':
+            info = ast.literal_eval(payload)
+            client.EntityInfo[info['GID']] = info
         if querytype == 'entities':
             client.EntityList = payload
             print(payload)
         if querytype == 'locations':
             client.LocationList = payload
         if querytype == 'getship':
-            client.ShipGID = int(payload[0])
-            print('Ship GID:', client.ShipGID)
-
+            client.SelectedShipGID = int(payload[0])
+            print('Ship GID:', client.SelectedShipGID)
+        if querytype == 'getspace':
+            client.SpaceID = int(payload[0])
+            print('Space ID: ', client.SpaceID)
 
 class GameClient(simulation.Client):
     def __init__(self, simulation):
@@ -54,7 +70,27 @@ class GameClient(simulation.Client):
         self.Time = None
         self.EntityList = []
         self.LocationList = []
-        self.ShipGID = None
+        self.SelectedShipGID = None
+        self.SelectedShipPlanet = None
+        self.SpaceID = None
+        self.EntityInfo = {}
+
+    def ProcessingStep(self):
+        # Do client side processing.
+        if self.SelectedShipGID is not None:
+            self.SendCommand(MsgQuery('getinfo', self.SelectedShipGID))
+            if self.SelectedShipGID in self.EntityInfo:
+                info = self.EntityInfo[self.SelectedShipGID]
+                if not self.SelectedShipPlanet == info['Location']:
+                    if not info['Location'] == self.SpaceID:
+                        self.SendCommand(MsgQuery('getinfo', info['Location']))
+                    self.SelectedShipPlanet = info['Location']
+                else:
+                    # Aleays query market info
+                    if 'MarketList' in self.EntityInfo[self.SelectedShipPlanet]:
+                        marketlist = self.EntityInfo[self.SelectedShipPlanet]["MarketList"]
+                        for GID in marketlist:
+                            self.SendCommand(MsgQuery('getinfo', GID))
 
 
 class SpaceSimulation(base_simulation.BaseSimulation):
