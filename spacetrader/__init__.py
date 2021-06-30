@@ -1,17 +1,21 @@
 
 import pygame
 import spacetrader.space_simulation_build as simulation_build
+import spacetrader.basic_client as basic_client
 import agent_based_macro.clientserver
 
 def main():
-    sim, client = simulation_build.build_sim()
-
+    sim = simulation_build.build_sim()
+    # Create the client
+    client = basic_client.BasicClient(simulation=sim)
+    sim.ClientDict[client.ClientID] = client
     pygame.init()
     screen = pygame.display.set_mode((640, 480))
     pygame.display.set_caption("Space Trader!!LOL!!")
     background = pygame.Surface(screen.get_size())
     background = background.convert()
     background.fill((0,0,0))
+    client.SetScreen(screen)
     clock = pygame.time.Clock()
     client.SendCommand(agent_based_macro.clientserver.MsgTimeQuery())
     client.SendCommand(simulation_build.MsgQuery('entities'))
@@ -30,17 +34,23 @@ def main():
     while keepGoing:
         clock.tick(30)
         for event in pygame.event.get():
+            was_processed = False
             if event.type == pygame.QUIT:
                 keepGoing = False
+                was_processed = True
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
                     if client.IsPaused:
                         client.SendCommand(agent_based_macro.clientserver.MsgUnpause())
                     else:
                         client.SendCommand(agent_based_macro.clientserver.MsgPause())
+                    was_processed = True
                 elif event.key == pygame.K_ESCAPE:
                     # Quick termination useful in debugging...
                     keepGoing = False
+                    was_processed = True
+            if not was_processed:
+                client.ProcessEvent(event)
         client.ProcessingStep()
         # Allow up to 5 processing steps within a loop <?>
         frames_since_time += 1
@@ -48,7 +58,7 @@ def main():
             sim.IncrementTime()
             frames_since_time = 0
         frames_since_time_query += 1
-        if frames_since_time_query >= 11:
+        if frames_since_time_query >= 5:
             frames_since_time_query = 0
             client.SendCommand(agent_based_macro.clientserver.MsgTimeQuery())
             client.ProcessingStep()
@@ -57,14 +67,12 @@ def main():
             if not did_anything:
                 break
         screen.blit(background, (0,0))
+        client.DrawScreenState()
         if client.IsPaused:
             screen.blit(label_paused, (300, 10))
         if not client.Time == last_time:
             label_time = font.render(f'{client.Time:.2f}', True, (255,255,255))
         screen.blit(label_time, (500, 10))
-        for i in range(0, len(client.LocationList)):
-            label = font.render(client.LocationList[i], True, (0, 255, 0))
-            screen.blit(label, (20, 100+ (50*i)))
         pygame.display.flip()
 
 

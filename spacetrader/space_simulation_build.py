@@ -26,6 +26,7 @@ class MsgQuery(clientserver.ClientServerMsg):
         :param server: simulation.Simulation
         :return:
         """
+        out = None
         if len(self.args) > 0:
             if self.args[0] == 'getinfo':
                 ent = server.GetEntity(int(args[1]))
@@ -35,17 +36,20 @@ class MsgQuery(clientserver.ClientServerMsg):
                 out = MsgQuery('entities', [f'{x.GID}: {x.Name} {x.Type}' for x in server.EntityList])
             elif self.args[0] == 'locations':
                 out = MsgQuery('locations',
-                               [f'{server.GetEntity(x).GID}: {server.GetEntity(x).Name}' for x in server.Locations])
+                               [f'{server.GetEntity(x).GID}:{server.GetEntity(x).Name}' for x in server.Locations])
             elif self.args[0] == 'getship':
                 out = MsgQuery('getship', [f'{server.ShipGID}', ])
             elif self.args[0] == 'getspace':
                 out = MsgQuery('getspace', [f'{server.NonLocationID}', ])
+            elif self.args[0] == 'moveship':
+                server.MoveShip(self.ClientID, int(args[1]), int(args[2]))
             else:
-                out = MsgQuery('Uknown query', [])
+                out = MsgQuery('Unknown query', [])
         else:
-            out = MsgQuery('Uknown query', [])
-        out.ClientID = self.ClientID
-        server.QueueMessage(out)
+            out = MsgQuery('Unknown query', [])
+        if out is not None:
+            out.ClientID = self.ClientID
+            server.QueueMessage(out)
 
     def ClientMessage(self, client, querytype, payload):
         if querytype == 'getinfo':
@@ -56,6 +60,9 @@ class MsgQuery(clientserver.ClientServerMsg):
             print(payload)
         if querytype == 'locations':
             client.LocationList = payload
+            for info in client.LocationList:
+                GID, name = info.split(':')
+                client.PlanetDict[int(GID)] = name
         if querytype == 'getship':
             client.SelectedShipGID = int(payload[0])
             print('Ship GID:', client.SelectedShipGID)
@@ -64,12 +71,19 @@ class MsgQuery(clientserver.ClientServerMsg):
             print('Space ID: ', client.SpaceID)
 
 class GameClient(simulation.Client):
+    """
+    Basic client processing, that handles data management.
+
+    Subclasses handle things like graphics and command processing. This way we can sub out the graphical
+    interface easily without touching the data management core of the client.
+    """
     def __init__(self, simulation):
         super().__init__(simulation)
         self.IsPaused = None
         self.Time = None
         self.EntityList = []
         self.LocationList = []
+        self.PlanetDict = {}
         self.SelectedShipGID = None
         self.SelectedShipPlanet = None
         self.SpaceID = None
@@ -138,6 +152,7 @@ class SpaceSimulation(base_simulation.BaseSimulation):
         space = base_simulation.Location('Space')
         self.AddLocation(space)
         self.NonLocationID = space.GID
+        base_simulation.TravellingAgent.NoLocationID = space.GID
         # Add a ship
         orth = name_lookup["Orth"]
         # This looks strange, but we say that we start at Orth and are heading to Orth. Loter on,
@@ -148,6 +163,11 @@ class SpaceSimulation(base_simulation.BaseSimulation):
         # This is a bit of a hack
         self.ShipGID = ship.GID
 
+    def MoveShip(self, clientID, shipID, locID):
+        # Eventually, need to validate that the client has the right to move the ship
+        ship = self.EntityList[shipID]
+        ship.StartMoving(locID, self.Time)
+
 
 
 
@@ -156,6 +176,5 @@ def build_sim():
     sim = SpaceSimulation()
     sim.TimeMode = 'realtime'
     sim.Setup()
-    client = GameClient(simulation=sim)
-    sim.ClientDict[client.ClientID] = client
-    return sim, client
+
+    return sim
