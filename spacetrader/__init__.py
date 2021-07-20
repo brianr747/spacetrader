@@ -10,8 +10,8 @@ def main():
     client = basic_client.BasicClient(simulation=sim)
     sim.ClientDict[client.ClientID] = client
     pygame.init()
-    screen = pygame.display.set_mode((640, 480))
-    pygame.display.set_caption("Space Trader!!LOL!!")
+    screen = pygame.display.set_mode((960, 620))
+    pygame.display.set_caption("Space Trader!")
     background = pygame.Surface(screen.get_size())
     background = background.convert()
     background.fill((0,0,0))
@@ -23,6 +23,7 @@ def main():
     # One time queries to get the ship ID, and the ID for space ("non-location")
     client.SendCommand(simulation_build.MsgQuery('getship'))
     client.SendCommand(simulation_build.MsgQuery('getspace'))
+    client.SendCommand(simulation_build.MsgQuery('getcommodities'))
     font = pygame.font.SysFont(pygame.font.get_default_font(), 20)
     # Paused is fixed text
     label_paused = font.render('Game Paused', True, (255, 255, 0))
@@ -32,7 +33,7 @@ def main():
     frames_since_time = 0
     frames_since_time_query = 0
     while keepGoing:
-        clock.tick(30)
+        clock.tick(40)
         for event in pygame.event.get():
             was_processed = False
             if event.type == pygame.QUIT:

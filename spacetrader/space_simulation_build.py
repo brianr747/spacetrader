@@ -41,6 +41,12 @@ class MsgQuery(clientserver.ClientServerMsg):
                 out = MsgQuery('getship', [f'{server.ShipGID}', ])
             elif self.args[0] == 'getspace':
                 out = MsgQuery('getspace', [f'{server.NonLocationID}', ])
+            elif self.args[0] == 'getcommodities':
+                commodities = []
+                for ent in server.EntityList:
+                    if ent.Type == 'commodity':
+                        commodities.append((ent.GID, ent.Name))
+                out = MsgQuery('getcommodities', commodities)
             elif self.args[0] == 'moveship':
                 server.MoveShip(self.ClientID, int(args[1]), int(args[2]))
             else:
@@ -55,6 +61,10 @@ class MsgQuery(clientserver.ClientServerMsg):
         if querytype == 'getinfo':
             info = ast.literal_eval(payload)
             client.EntityInfo[info['GID']] = info
+            try:
+                client.PendingQueries.remove(info['GID'])
+            except KeyError:
+                pass
         if querytype == 'entities':
             client.EntityList = payload
             print(payload)
@@ -69,6 +79,11 @@ class MsgQuery(clientserver.ClientServerMsg):
         if querytype == 'getspace':
             client.SpaceID = int(payload[0])
             print('Space ID: ', client.SpaceID)
+        if querytype == 'getcommodities':
+            client.CommodityDict = {}
+            for GID, name in payload:
+                client.CommodityDict[name] = GID
+            print(client.CommodityDict)
 
 class GameClient(simulation.Client):
     """
@@ -88,6 +103,21 @@ class GameClient(simulation.Client):
         self.SelectedShipPlanet = None
         self.SpaceID = None
         self.EntityInfo = {}
+        self.CommodityDict = {}
+        self.PendingQueries = set()
+
+
+    def QueryInfo(self, GID):
+        """
+        "Safe" Entity query call. Does nothing if a query is pending.
+        :param GID: int
+        :return:
+        """
+        if GID in self.PendingQueries:
+            return
+        self.SendCommand(MsgQuery('getinfo', GID))
+        self.PendingQueries.add(GID)
+
 
     def ProcessingStep(self):
         # Do client side processing.
@@ -117,12 +147,18 @@ class SpaceSimulation(base_simulation.BaseSimulation):
         Set up the galaxy.
         :return:
         """
+        commodities = ('Fud', 'Consumer Goods')
+        for com in commodities:
+            obj = simulation.Entity(com, 'commodity')
+            self.AddCommodity(obj)
         # Eventually, create Planet Entity's with more information like (x,y) position (x,y,z!)
-        locations = (('Orth', (0.,0.)),
-                     ('Lave', (1., 0.)))
+        locations = (
+            ('Orth', (0.,0.), (1.1,)),
+            ('Lave', (1., 0.), (1.2,)),
+                     )
         name_lookup = {}
 
-        for loc, coords in locations:
+        for loc, coords, productivity in locations:
             obj = base_simulation.Planet(loc, coords)
             # Temporarily store planet names for setup
             name_lookup[loc] = obj
@@ -134,10 +170,10 @@ class SpaceSimulation(base_simulation.BaseSimulation):
             HH = base_simulation.HouseholdSector(obj.GID, money_balance=num_workers*10000,
                                                  target_money=num_workers*9900)
             self.AddHousehold(HH)
-        commodities = ('Fud', 'Consumer Goods')
-        for com in commodities:
-            obj = simulation.Entity(com, 'commodity')
-            self.AddCommodity(obj)
+            # Assign the productivity
+            for prod, commodity_name in zip(productivity, ('Fud',)):
+                commod = self.GetCommodityByName(commodity_name)
+                obj.ProductivityDict[commod] = prod
         self.GenerateMarkets()
         for loc_id in self.Locations:
             obj = simulation.Entity.GetEntity(loc_id)
