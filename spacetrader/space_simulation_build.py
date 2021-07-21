@@ -1,5 +1,6 @@
 
 import ast
+import time
 
 from agent_based_macro import simulation as simulation
 
@@ -95,7 +96,6 @@ class GameClient(simulation.Client):
     def __init__(self, simulation):
         super().__init__(simulation)
         self.IsPaused = None
-        self.Time = None
         self.EntityList = []
         self.LocationList = []
         self.PlanetDict = {}
@@ -105,6 +105,8 @@ class GameClient(simulation.Client):
         self.EntityInfo = {}
         self.CommodityDict = {}
         self.PendingQueries = set()
+        # Number of seconds per game day. Value copied from server.
+
 
 
     def QueryInfo(self, GID):
@@ -153,8 +155,8 @@ class SpaceSimulation(base_simulation.BaseSimulation):
             self.AddCommodity(obj)
         # Eventually, create Planet Entity's with more information like (x,y) position (x,y,z!)
         locations = (
-            ('Orth', (0.,0.), (1.1,)),
-            ('Lave', (1., 0.), (1.2,)),
+            ('Orth', (0.,0.), (1.2,)),
+            ('Mors', (1., 0.), (1.1,)),
                      )
         name_lookup = {}
 
@@ -203,9 +205,6 @@ class SpaceSimulation(base_simulation.BaseSimulation):
         # Eventually, need to validate that the client has the right to move the ship
         ship = self.EntityList[shipID]
         ship.StartMoving(locID, self.Time)
-
-
-
 
 
 def build_sim():

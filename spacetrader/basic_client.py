@@ -16,6 +16,7 @@ class BasicClient(space_simulation_build.GameClient):
         self.Mode = 'DrawPlanets'
         self.MarketLookup = {}
 
+
     def SetScreen(self, screen):
         self.ScreenSize = screen.get_size()
         self.Screen = screen

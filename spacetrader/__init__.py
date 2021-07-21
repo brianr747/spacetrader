@@ -1,4 +1,6 @@
 
+import time
+
 import pygame
 import spacetrader.space_simulation_build as simulation_build
 import spacetrader.basic_client as basic_client
@@ -8,6 +10,8 @@ def main():
     sim = simulation_build.build_sim()
     # Create the client
     client = basic_client.BasicClient(simulation=sim)
+    # Ensure that the client DayLength is synced to the server. (Eventually, need to query.)
+    client.DayLength = sim.DayLength
     sim.ClientDict[client.ClientID] = client
     pygame.init()
     screen = pygame.display.set_mode((960, 620))
@@ -20,14 +24,13 @@ def main():
     client.SendCommand(agent_based_macro.clientserver.MsgTimeQuery())
     client.SendCommand(simulation_build.MsgQuery('entities'))
     client.SendCommand(simulation_build.MsgQuery('locations'))
-    # One time queries to get the ship ID, and the ID for space ("non-location")
+    # One time queries to get the ship ID, the ID for space ("non-location"), commodities
     client.SendCommand(simulation_build.MsgQuery('getship'))
     client.SendCommand(simulation_build.MsgQuery('getspace'))
     client.SendCommand(simulation_build.MsgQuery('getcommodities'))
     font = pygame.font.SysFont(pygame.font.get_default_font(), 20)
     # Paused is fixed text
     label_paused = font.render('Game Paused', True, (255, 255, 0))
-    last_time = client.Time
     label_time = font.render('', True, (255,255,255))
     keepGoing = True
     frames_since_time = 0
@@ -59,7 +62,7 @@ def main():
             sim.IncrementTime()
             frames_since_time = 0
         frames_since_time_query += 1
-        if frames_since_time_query >= 5:
+        if frames_since_time_query >= 10:
             frames_since_time_query = 0
             client.SendCommand(agent_based_macro.clientserver.MsgTimeQuery())
             client.ProcessingStep()
@@ -71,9 +74,20 @@ def main():
         client.DrawScreenState()
         if client.IsPaused:
             screen.blit(label_paused, (300, 10))
-        if not client.Time == last_time:
-            label_time = font.render(f'{client.Time:.2f}', True, (255,255,255))
-        screen.blit(label_time, (500, 10))
+        if client.Time is not None:
+            if client.IsPaused:
+                # If paused, just render the time.
+                label_time = font.render(f'{client.Time:.2f}', True, (255,255,255))
+            else:
+                # If not, estimate how far time has advanced by looking at the difference between
+                # time.monotonic() and the last response time (filled in by the client message).
+                # This way, we can have smooth client time flow without continuously bombarding with
+                # time queries.
+                # (Obviously, could just look at the simulation object, but want to be ready for
+                # true client/server.
+                time_estimate = client.Time + (time.monotonic() - client.LastResponseMonotonic)/client.DayLength
+                label_time = font.render(f'{time_estimate:.2f}', True, (255,255,255))
+            screen.blit(label_time, (500, 10))
         pygame.display.flip()
 
 
