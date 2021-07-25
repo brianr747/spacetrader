@@ -83,10 +83,15 @@ class BasicClient(space_simulation_build.GameClient):
                 market_ID = self.MarketLookup[loc_ID][fud_ID]
                 ent = self.EntityInfo[market_ID]
                 txt = f'Last ${ent["LastPrice"]}'
+                last_time = ent["LastTime"]
+                is_recent = abs(last_time - self.Time) < .02
                 coordinates = self.EntityInfo[loc_ID]['Coordinates']
                 screen_x = int(mid_point[0] + coordinates[0] * x_scale) + 50
                 screen_y = int(mid_point[1] + coordinates[1] * y_scale) - 30
-                market_msg = self.planet_font.render(txt, True, (240, 240, 240))
+                if is_recent:
+                    market_msg = self.planet_font.render(txt, True, (255, 255, 0))
+                else:
+                    market_msg = self.planet_font.render(txt, True, (240, 240, 240))
                 self.Screen.blit(market_msg, (screen_x, screen_y))
                 txt = 'Bid/Ask'
                 market_msg = self.planet_font.render(txt, True, (240, 240, 240))

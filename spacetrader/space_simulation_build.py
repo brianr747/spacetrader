@@ -124,19 +124,19 @@ class GameClient(simulation.Client):
     def ProcessingStep(self):
         # Do client side processing.
         if self.SelectedShipGID is not None:
-            self.SendCommand(MsgQuery('getinfo', self.SelectedShipGID))
+            self.QueryInfo(self.SelectedShipGID)
             if self.SelectedShipGID in self.EntityInfo:
                 info = self.EntityInfo[self.SelectedShipGID]
                 if not self.SelectedShipPlanet == info['Location']:
                     if not info['Location'] == self.SpaceID:
-                        self.SendCommand(MsgQuery('getinfo', info['Location']))
+                        self.QueryInfo(info['Location'])
                     self.SelectedShipPlanet = info['Location']
                 else:
                     # Aleays query market info
                     if 'MarketList' in self.EntityInfo[self.SelectedShipPlanet]:
                         marketlist = self.EntityInfo[self.SelectedShipPlanet]["MarketList"]
                         for GID in marketlist:
-                            self.SendCommand(MsgQuery('getinfo', GID))
+                            self.QueryInfo(GID)
 
 
 class SpaceSimulation(base_simulation.BaseSimulation):
@@ -196,7 +196,7 @@ class SpaceSimulation(base_simulation.BaseSimulation):
         # This looks strange, but we say that we start at Orth and are heading to Orth. Loter on,
         # may need to spawn ships in transit, so need the flexibility
         ship = base_simulation.TravellingAgent('ship', orth.Coordinates, orth.GID,
-                                               travelling_to_ID=orth.GID)
+                                               travelling_to_ID=orth.GID, speed=1.)
         self.AddEntity(ship)
         # This is a bit of a hack
         self.ShipGID = ship.GID
