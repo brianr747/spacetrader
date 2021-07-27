@@ -2,6 +2,7 @@
 import ast
 import time
 
+import agent_based_macro.entity
 from agent_based_macro import simulation as simulation
 
 from agent_based_macro import base_simulation as base_simulation
@@ -30,14 +31,14 @@ class MsgQuery(clientserver.ClientServerMsg):
         out = None
         if len(self.args) > 0:
             if self.args[0] == 'getinfo':
-                ent = server.GetEntity(int(args[1]))
-                info = ent.GetRepresentation()
+                ent = server.get_entity(int(args[1]))
+                info = ent.get_representation()
                 out = MsgQuery('getinfo', info.__repr__())
             elif self.args[0] == 'entities':
                 out = MsgQuery('entities', [f'{x.GID}: {x.Name} {x.Type}' for x in server.EntityList])
             elif self.args[0] == 'locations':
                 out = MsgQuery('locations',
-                               [f'{server.GetEntity(x).GID}:{server.GetEntity(x).Name}' for x in server.Locations])
+                               [f'{server.get_entity(x).GID}:{server.get_entity(x).Name}' for x in server.Locations])
             elif self.args[0] == 'getship':
                 out = MsgQuery('getship', [f'{server.ShipGID}', ])
             elif self.args[0] == 'getspace':
@@ -151,7 +152,7 @@ class SpaceSimulation(base_simulation.BaseSimulation):
         """
         commodities = ('Fud', 'Consumer Goods')
         for com in commodities:
-            obj = simulation.Entity(com, 'commodity')
+            obj = agent_based_macro.entity.Entity(com, 'commodity')
             self.AddCommodity(obj)
         # Eventually, create Planet Entity's with more information like (x,y) position (x,y,z!)
         locations = (
@@ -178,11 +179,11 @@ class SpaceSimulation(base_simulation.BaseSimulation):
                 obj.ProductivityDict[commod] = prod
         self.GenerateMarkets()
         for loc_id in self.Locations:
-            obj = simulation.Entity.GetEntity(loc_id)
-            obj.Init()
+            obj = agent_based_macro.entity.Entity.get_entity(loc_id)
+            obj.initialise()
             # Then, find the JobGuarantee object
             for ent_id in obj.EntityList:
-                ent = simulation.Entity.GetEntity(ent_id)
+                ent = agent_based_macro.entity.Entity.get_entity(ent_id)
                 if ent.Type == 'JobGuarantee':
                     ent.FindEmployers()
         # Space is a "nonlocation": the ID to be used for anything (ships) that are not at a logical
