@@ -23,13 +23,13 @@ def main():
     background.fill((0,0,0))
     client.SetScreen(screen)
     clock = pygame.time.Clock()
-    client.SendCommand(agent_based_macro.clientserver.MsgTimeQuery())
-    client.SendCommand(simulation_build.MsgQuery('entities'))
-    client.SendCommand(simulation_build.MsgQuery('locations'))
+    client.send_command(agent_based_macro.clientserver.MsgTimeQuery())
+    client.send_command(simulation_build.MsgQuery('entities'))
+    client.send_command(simulation_build.MsgQuery('locations'))
     # One time queries to get the ship ID, the ID for space ("non-location"), commodities
-    client.SendCommand(simulation_build.MsgQuery('getship'))
-    client.SendCommand(simulation_build.MsgQuery('getspace'))
-    client.SendCommand(simulation_build.MsgQuery('getcommodities'))
+    client.send_command(simulation_build.MsgQuery('getship'))
+    client.send_command(simulation_build.MsgQuery('getspace'))
+    client.send_command(simulation_build.MsgQuery('getcommodities'))
     font = pygame.font.SysFont(pygame.font.get_default_font(), 20)
     # Paused is fixed text
     label_paused = font.render('Game Paused', True, (255, 255, 0))
@@ -49,9 +49,9 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
                     if client.IsPaused:
-                        client.SendCommand(agent_based_macro.clientserver.MsgUnpause())
+                        client.send_command(agent_based_macro.clientserver.MsgUnpause())
                     else:
-                        client.SendCommand(agent_based_macro.clientserver.MsgPause())
+                        client.send_command(agent_based_macro.clientserver.MsgPause())
                     was_processed = True
                 elif event.key == pygame.K_ESCAPE:
                     # Quick termination useful in debugging...
@@ -65,16 +65,16 @@ def main():
             frames_since_client_proc = 0
         frames_since_time += 1
         if frames_since_time >= 2:
-            sim.IncrementTime()
+            sim.increment_time()
             frames_since_time = 0
         frames_since_time_query += 1
         if frames_since_time_query >= 5:
             frames_since_time_query = 0
-            client.SendCommand(agent_based_macro.clientserver.MsgTimeQuery())
+            client.send_command(agent_based_macro.clientserver.MsgTimeQuery())
             client.ProcessingStep()
         cnt = 0
         for i in range(0, 10):
-            did_anything = sim.Process()
+            did_anything = sim.process()
             if not did_anything:
                 break
             cnt += 1

@@ -10,7 +10,7 @@ from agent_based_macro import clientserver as clientserver
 
 
 class MsgQuery(clientserver.ClientServerMsg):
-    def ServerCommand(self, server, *args):
+    def server_command(self, server, *args):
         """
         This class implements the protocol for passing messages between client and server. Both the client and
         server use this class, so that everything is mirrored in one place.
@@ -57,9 +57,9 @@ class MsgQuery(clientserver.ClientServerMsg):
             out = MsgQuery('Unknown query', [])
         if out is not None:
             out.ClientID = self.ClientID
-            server.QueueMessage(out)
+            server.queue_message(out)
 
-    def ClientMessage(self, client, querytype, payload):
+    def client_message(self, client, querytype, payload):
         if querytype == 'getinfo':
             info = ast.literal_eval(payload)
             client.EntityInfo[info['GID']] = info
@@ -118,7 +118,7 @@ class GameClient(simulation.Client):
         """
         if GID in self.PendingQueries:
             return
-        self.SendCommand(MsgQuery('getinfo', GID))
+        self.send_command(MsgQuery('getinfo', GID))
         self.PendingQueries.add(GID)
 
 
@@ -153,7 +153,7 @@ class SpaceSimulation(base_simulation.BaseSimulation):
         commodities = ('Fud', 'Consumer Goods')
         for com in commodities:
             obj = agent_based_macro.entity.Entity(com, 'commodity')
-            self.AddCommodity(obj)
+            self.add_commodity(obj)
         # Eventually, create Planet Entity's with more information like (x,y) position (x,y,z!)
         locations = (
             ('Orth', (0.,0.), (1.2,)),
@@ -165,19 +165,19 @@ class SpaceSimulation(base_simulation.BaseSimulation):
             obj = base_simulation.Planet(loc, coords)
             # Temporarily store planet names for setup
             name_lookup[loc] = obj
-            self.AddLocation(obj)
+            self.add_location(obj)
             num_workers = 80
             JG = base_simulation.JobGuarantee(obj.GID, self.CentralGovernmentID, job_guarantee_wage=100,
                                               num_workers=num_workers)
-            self.AddEntity(JG)
+            self.add_entity(JG)
             HH = base_simulation.HouseholdSector(obj.GID, money_balance=num_workers*10000,
                                                  target_money=num_workers*9900)
-            self.AddHousehold(HH)
+            self.add_household(HH)
             # Assign the productivity
             for prod, commodity_name in zip(productivity, ('Fud',)):
-                commod = self.GetCommodityByName(commodity_name)
+                commod = self.get_commodity_by_name(commodity_name)
                 obj.ProductivityDict[commod] = prod
-        self.GenerateMarkets()
+        self.generate_markets()
         for loc_id in self.Locations:
             obj = agent_based_macro.entity.Entity.get_entity(loc_id)
             obj.initialise()
@@ -185,11 +185,11 @@ class SpaceSimulation(base_simulation.BaseSimulation):
             for ent_id in obj.EntityList:
                 ent = agent_based_macro.entity.Entity.get_entity(ent_id)
                 if ent.Type == 'JobGuarantee':
-                    ent.FindEmployers()
+                    ent.find_employers()
         # Space is a "nonlocation": the ID to be used for anything (ships) that are not at a logical
         # location.
         space = base_simulation.Location('Space')
-        self.AddLocation(space)
+        self.add_location(space)
         self.NonLocationID = space.GID
         base_simulation.TravellingAgent.NoLocationID = space.GID
         # Add a ship
@@ -197,15 +197,15 @@ class SpaceSimulation(base_simulation.BaseSimulation):
         # This looks strange, but we say that we start at Orth and are heading to Orth. Loter on,
         # may need to spawn ships in transit, so need the flexibility
         ship = base_simulation.TravellingAgent('ship', orth.Coordinates, orth.GID,
-                                               travelling_to_ID=orth.GID, speed=1.)
-        self.AddEntity(ship)
+                                               travelling_to_id=orth.GID, speed=1.)
+        self.add_entity(ship)
         # This is a bit of a hack
         self.ShipGID = ship.GID
 
     def MoveShip(self, clientID, shipID, locID):
         # Eventually, need to validate that the client has the right to move the ship
         ship = self.EntityList[shipID]
-        ship.StartMoving(locID, self.Time)
+        ship.start_moving(locID, self.Time)
 
 
 def build_sim():

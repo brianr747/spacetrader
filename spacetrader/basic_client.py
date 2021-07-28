@@ -35,7 +35,7 @@ class BasicClient(space_simulation_build.GameClient):
                 for GID in self.PlanetDict.keys():
                     if (not(ship_loc) == GID) and (not self.PlanetDict[GID] == 'Space'):
                         target = GID
-                self.SendCommand(space_simulation_build.MsgQuery('moveship', self.SelectedShipGID, target))
+                self.send_command(space_simulation_build.MsgQuery('moveship', self.SelectedShipGID, target))
 
 
     def DrawScreenState(self):
@@ -103,7 +103,7 @@ class BasicClient(space_simulation_build.GameClient):
             self.planet_font = pygame.font.SysFont(pygame.font.get_default_font(), 20)
         for GID, name in self.PlanetDict.items():
             if GID not in self.EntityInfo:
-                self.SendCommand(space_simulation_build.MsgQuery('getinfo', GID))
+                self.send_command(space_simulation_build.MsgQuery('getinfo', GID))
                 # In order to avoid spamming this getinfo() request, stick an empty entry in the EntityInfo
                 self.EntityInfo[GID] = {}
             else:
