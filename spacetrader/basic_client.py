@@ -84,7 +84,10 @@ class BasicClient(space_simulation_build.GameClient):
                 ent = self.EntityInfo[market_ID]
                 txt = f'Last ${ent["LastPrice"]}'
                 last_time = ent["LastTime"]
-                is_recent = abs(last_time - self.Time) < .02
+                if last_time is None:
+                    is_recent = False
+                else:
+                    is_recent = abs(last_time - self.Time) < .02
                 coordinates = self.EntityInfo[loc_ID]['Coordinates']
                 screen_x = int(mid_point[0] + coordinates[0] * x_scale) + 50
                 screen_y = int(mid_point[1] + coordinates[1] * y_scale) - 30
