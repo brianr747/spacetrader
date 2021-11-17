@@ -169,9 +169,21 @@ class SpaceSimulation(base_simulation.BaseSimulation):
             num_workers = 80
             JG = base_simulation.JobGuarantee(obj.GID, self.CentralGovernmentID, job_guarantee_wage=100,
                                               num_workers=num_workers)
+            fud_id = self.get_commodity_by_name('Fud')
+            if len(productivity) > 1:
+                raise NotImplementedError('Need to fix initial stocking of the JG inventory')
+            # Add one day's production to inventory, as otherwise, households will buy up everything...
+            JG.Inventory[fud_id].add_inventory(productivity[0]*num_workers, 0.)
             self.add_entity(JG)
-            HH = base_simulation.HouseholdSector(obj.GID, money_balance=num_workers*10000,
+            JG.register_series('production')
+            JG.register_series('emergency')
+            HH = base_simulation.HouseholdSector(obj.GID, money_balance=num_workers*1000,
                                                  target_money=num_workers*9900)
+            HH.register_series('DailyBid')
+            HH.register_series('MarketOrder')
+            HH.register_series('TargetMoney')
+            HH.register_series('Money')
+            HH.register_series('DailyEarnings')
             self.add_household(HH)
             # Assign the productivity
             for prod, commodity_name in zip(productivity, ('Fud',)):

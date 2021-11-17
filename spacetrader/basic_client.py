@@ -102,6 +102,9 @@ class BasicClient(space_simulation_build.GameClient):
                 txt = f'{ent["BidPrice"]}/{ent["AskPrice"]}'
                 market_msg = self.planet_font.render(txt, True, (240, 240, 240))
                 self.Screen.blit(market_msg, (screen_x, screen_y + 40))
+                txt = f'({ent["BidSize"]}/{ent["AskSize"]})'
+                market_msg = self.planet_font.render(txt, True, (240, 240, 240))
+                self.Screen.blit(market_msg, (screen_x, screen_y + 60))
         if self.planet_font is None:
             self.planet_font = pygame.font.SysFont(pygame.font.get_default_font(), 20)
         for GID, name in self.PlanetDict.items():

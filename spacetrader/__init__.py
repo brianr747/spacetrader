@@ -9,7 +9,7 @@ import agent_based_macro.clientserver
 
 def main():
     sim = simulation_build.build_sim()
-    sim.DayLength = 3.
+    sim.DayLength = 2.
     # Create the client
     client = basic_client.BasicClient(simulation=sim)
     # Ensure that the client DayLength is synced to the server. (Eventually, need to query.)
@@ -106,6 +106,8 @@ def main():
                 time_rect = pygame.Rect(500+width, 30, 100-width, 5)
                 pygame.draw.rect(screen, (255, 255, 0), time_rect)
         pygame.display.flip()
+    # cleanup - write the time series
+    sim.dump_time_series('series.txt')
 
 
 
