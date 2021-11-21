@@ -156,12 +156,12 @@ class SpaceSimulation(base_simulation.BaseSimulation):
             self.add_commodity(obj)
         # Eventually, create Planet Entity's with more information like (x,y) position (x,y,z!)
         locations = (
-            ('Orth', (0.,0.), (1.2,)),
-            ('Mors', (1., 0.), (1.1,)),
+            ('Orth', (0.,0.), (1.2,), 2),
+            ('Mors', (1., 0.), (1.1,), 2),
                      )
         name_lookup = {}
 
-        for loc, coords, productivity in locations:
+        for loc, coords, productivity, num_producers in locations:
             obj = base_simulation.Planet(loc, coords)
             # Temporarily store planet names for setup
             name_lookup[loc] = obj
@@ -189,6 +189,10 @@ class SpaceSimulation(base_simulation.BaseSimulation):
             for prod, commodity_name in zip(productivity, ('Fud',)):
                 commod = self.get_commodity_by_name(commodity_name)
                 obj.ProductivityDict[commod] = prod
+            for i in range(0, num_producers):
+                producer = base_simulation.ProducerLabour(f'producer{i}', 10000., location_id=obj.GID,
+                                                          commodity_id=fud_id)
+                self.add_entity(producer)
         self.generate_markets()
         for loc_id in self.Locations:
             obj = agent_based_macro.entity.Entity.get_entity(loc_id)
