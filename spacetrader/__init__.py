@@ -107,7 +107,7 @@ def main():
                 pygame.draw.rect(screen, (255, 255, 0), time_rect)
         pygame.display.flip()
     # cleanup - write the time series
-    sim.dump_time_series('series.txt')
+    sim.shutdown()
 
 
 

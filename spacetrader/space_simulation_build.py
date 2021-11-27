@@ -2,6 +2,7 @@
 import ast
 import time
 
+import agent_based_macro.base_simulation_agents
 import agent_based_macro.entity
 from agent_based_macro import simulation as simulation
 
@@ -144,6 +145,7 @@ class SpaceSimulation(base_simulation.BaseSimulation):
     def __init__(self):
         super().__init__()
         self.ShipGID = None
+        self.SeriesFileName = 'series.txt'
 
     def Setup(self):
         """
@@ -160,6 +162,8 @@ class SpaceSimulation(base_simulation.BaseSimulation):
             ('Mors', (1., 0.), (1.1,), 2),
                      )
         name_lookup = {}
+        # Log of all transactions. If we do not open the log, log messages are not processed.
+        self.open_log('transactions', 'transactions.txt')
 
         for loc, coords, productivity, num_producers in locations:
             obj = base_simulation.Planet(loc, coords)
@@ -167,18 +171,23 @@ class SpaceSimulation(base_simulation.BaseSimulation):
             name_lookup[loc] = obj
             self.add_location(obj)
             num_workers = 80
-            JG = base_simulation.JobGuarantee(obj.GID, self.CentralGovernmentID, job_guarantee_wage=100,
-                                              num_workers=num_workers)
+            JG = agent_based_macro.base_simulation_agents.JobGuarantee(obj.GID, self.CentralGovernmentID, job_guarantee_wage=100,
+                                                                       num_workers=num_workers)
             fud_id = self.get_commodity_by_name('Fud')
+            JG.ProductivityMultiplier = 0.8
             if len(productivity) > 1:
                 raise NotImplementedError('Need to fix initial stocking of the JG inventory')
             # Add one day's production to inventory, as otherwise, households will buy up everything...
             JG.Inventory[fud_id].add_inventory(productivity[0]*num_workers, 0.)
             self.add_entity(JG)
+            # Add a lookup for the JG by planet GID
+            self.JGLookup[obj.GID] = JG
             JG.register_series('production')
             JG.register_series('emergency')
-            HH = base_simulation.HouseholdSector(obj.GID, money_balance=num_workers*1000,
-                                                 target_money=num_workers*9900)
+            JG.register_series('unemployment')
+            money_balance = num_workers*1000
+            HH = base_simulation.HouseholdSector(obj.GID, money_balance=money_balance,
+                                                 target_money=int(money_balance*.99))
             HH.register_series('DailyBid')
             HH.register_series('MarketOrder')
             HH.register_series('TargetMoney')
@@ -190,8 +199,11 @@ class SpaceSimulation(base_simulation.BaseSimulation):
                 commod = self.get_commodity_by_name(commodity_name)
                 obj.ProductivityDict[commod] = prod
             for i in range(0, num_producers):
-                producer = base_simulation.ProducerLabour(f'producer{i}', 10000., location_id=obj.GID,
-                                                          commodity_id=fud_id)
+                producer = agent_based_macro.base_simulation_agents.ProducerLabour(f'producer{i}', 10000., location_id=obj.GID,
+                                                                                   commodity_id=fud_id)
+                if i == 0:
+                    producer.register_series('money')
+                    producer.register_series('wage_payment')
                 self.add_entity(producer)
         self.generate_markets()
         for loc_id in self.Locations:
@@ -207,13 +219,13 @@ class SpaceSimulation(base_simulation.BaseSimulation):
         space = base_simulation.Location('Space')
         self.add_location(space)
         self.NonLocationID = space.GID
-        base_simulation.TravellingAgent.NoLocationID = space.GID
+        agent_based_macro.base_simulation_agents.TravellingAgent.NoLocationID = space.GID
         # Add a ship
         orth = name_lookup["Orth"]
         # This looks strange, but we say that we start at Orth and are heading to Orth. Loter on,
         # may need to spawn ships in transit, so need the flexibility
-        ship = base_simulation.TravellingAgent('ship', orth.Coordinates, orth.GID,
-                                               travelling_to_id=orth.GID, speed=1.)
+        ship = agent_based_macro.base_simulation_agents.TravellingAgent('ship', orth.Coordinates, orth.GID,
+                                                                        travelling_to_id=orth.GID, speed=1.)
         self.add_entity(ship)
         # This is a bit of a hack
         self.ShipGID = ship.GID
