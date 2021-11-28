@@ -232,7 +232,7 @@ class SpaceSimulation(base_simulation.BaseSimulation):
         # This looks strange, but we say that we start at Orth and are heading to Orth. Loter on,
         # may need to spawn ships in transit, so need the flexibility
         ship = agent_based_macro.base_simulation_agents.TravellingAgent('ship', orth.Coordinates, orth.GID,
-                                                                        money_balance=500,
+                                                                        money_balance=2000,
                                                                         travelling_to_id=orth.GID, speed=1.)
         self.add_entity(ship)
         # This is a bit of a hack

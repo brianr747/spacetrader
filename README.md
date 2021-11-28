@@ -1,13 +1,25 @@
 # spacetrader
 Space Trader Game using agent_based_macro model.
 
-This is supposed to evolve into a space-trading game. 
+This is supposed to evolve into a space-trading game.
 
-I still have not closed the economy loop, so it does not do much.
+**Initial Client Update**
+It is now possible to actually do some trading.
 
-Note that I have separated this project from agent_based_macro, and unfortunately, I need
-to switch projects to push commits. It is extremely likely that the two projects will
-get out of sync during this initial framework setup.
+The game works via keyboard commands. They are case sensitive.
+
+You control a ship that flies between two planets - Orth, and Mors. The bid/offer and
+size of orders are displayed for the planet the ship is docked at.
+
+On the right, there is a status display that shows the money balance of the ship, and 
+inventory.
+
+- **ESC** Quit. During development, need to close client quickly.
+- **p** Toggle pause/unpause.
+- **f** Fly ship to "other planet."  (There are two planets.)
+- **"."** (period) Toggle the order size between 1 or 10 units. 
+- **b** Buy selected commodity (Fud), order size as indicated.
+- **s** Sell selected commodity (Fud), also using order size.
 
 **Version 0.1 Plan**
 In case anyone is excited about a sophisticated economic simulation, it will take patience.

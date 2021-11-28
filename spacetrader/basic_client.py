@@ -64,6 +64,11 @@ class BasicClient(space_simulation_build.GameClient):
                 self.send_command(space_simulation_build.MsgQuery('ship_sell', self.SelectedShipGID,
                                                                   self.SelectedShipPlanet, self.SelectedCommodity,
                                                                   price, amount))
+            if event.key == pygame.K_PERIOD:
+                if self.OrderSize == 1:
+                    self.OrderSize = 10
+                else:
+                    self.OrderSize = 1
 
 
     def DrawScreenState(self):
