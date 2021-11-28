@@ -15,6 +15,10 @@ class BasicClient(space_simulation_build.GameClient):
         self.ScreenSize = (0,0)
         self.Mode = 'DrawPlanets'
         self.MarketLookup = {}
+        self.SelectedCommodity = None
+        self.SelectedBid = 10000
+        self.SelectedAsk = 0
+        self.OrderSize = 1
 
 
     def SetScreen(self, screen):
@@ -36,6 +40,30 @@ class BasicClient(space_simulation_build.GameClient):
                     if (not(ship_loc) == GID) and (not self.PlanetDict[GID] == 'Space'):
                         target = GID
                 self.send_command(space_simulation_build.MsgQuery('moveship', self.SelectedShipGID, target))
+            if event.key == pygame.K_b:
+                if self.PlanetDict[self.SelectedShipPlanet] == 'Space':
+                    return
+                if self.SelectedCommodity is None:
+                    return
+                if self.SelectedAsk is None:
+                    return
+                price = self.SelectedAsk
+                amount = self.OrderSize
+                self.send_command(space_simulation_build.MsgQuery('ship_buy', self.SelectedShipGID,
+                                                                  self.SelectedShipPlanet, self.SelectedCommodity,
+                                                                  price, amount))
+            if event.key == pygame.K_s:
+                if self.PlanetDict[self.SelectedShipPlanet] == 'Space':
+                    return
+                if self.SelectedCommodity is None:
+                    return
+                if self.SelectedBid is None:
+                    return
+                price = self.SelectedBid
+                amount = self.OrderSize
+                self.send_command(space_simulation_build.MsgQuery('ship_sell', self.SelectedShipGID,
+                                                                  self.SelectedShipPlanet, self.SelectedCommodity,
+                                                                  price, amount))
 
 
     def DrawScreenState(self):
@@ -50,6 +78,21 @@ class BasicClient(space_simulation_build.GameClient):
             l = 60
             ship_rect = pygame.Rect(screen_x - l/2, screen_y - l/2, l, l)
             pygame.draw.rect(self.Screen, (0,0,255), ship_rect)
+            money = f'Ship Cash ${self.EntityInfo[self.SelectedShipGID]["Money"]}'
+            inventory = self.EntityInfo[self.SelectedShipGID]["Inventory"]
+            money_msg = self.planet_font.render(money, True, (240, 240, 240))
+            self.Screen.blit(money_msg, (800, 20))
+            inventory_msg = self.planet_font.render('Inventory', True, (240, 240, 240))
+            self.Screen.blit(inventory_msg, (800, 40))
+            pos = 40
+            for row in inventory:
+                pos += 18
+                txt = f'{self.CommodityDict[row[0]]:15} {row[1]:4}'
+                inventory_msg = self.planet_font.render(txt, True, (240, 240, 240))
+                self.Screen.blit(inventory_msg, (800, pos))
+            pos += 18
+            size_msg = self.planet_font.render(f'Trade Size = x{self.OrderSize}', True, (0, 0, 255))
+            self.Screen.blit(size_msg, (800, pos))
         except KeyError:
             pass
         loc_ID = None
@@ -79,6 +122,7 @@ class BasicClient(space_simulation_build.GameClient):
         if loc_ID in self.MarketLookup:
             # Eventually, need to change target commodity
             fud_ID = self.CommodityDict['Fud']
+            self.SelectedCommodity = fud_ID
             if fud_ID in self.MarketLookup[loc_ID]:
                 market_ID = self.MarketLookup[loc_ID][fud_ID]
                 ent = self.EntityInfo[market_ID]
@@ -101,6 +145,9 @@ class BasicClient(space_simulation_build.GameClient):
                 self.Screen.blit(market_msg, (screen_x, screen_y + 20))
                 txt = f'{ent["BidPrice"]}/{ent["AskPrice"]}'
                 market_msg = self.planet_font.render(txt, True, (240, 240, 240))
+                # Fill in the bid/ask members
+                self.SelectedBid = ent["BidPrice"]
+                self.SelectedAsk = ent['AskPrice']
                 self.Screen.blit(market_msg, (screen_x, screen_y + 40))
                 txt = f'({ent["BidSize"]}/{ent["AskSize"]})'
                 market_msg = self.planet_font.render(txt, True, (240, 240, 240))

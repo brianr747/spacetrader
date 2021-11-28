@@ -52,8 +52,12 @@ class MsgQuery(clientserver.ClientServerMsg):
                 out = MsgQuery('getcommodities', commodities)
             elif self.args[0] == 'moveship':
                 server.MoveShip(self.ClientID, int(args[1]), int(args[2]))
+            elif self.args[0] == 'ship_buy':
+                server.ship_buy(self.ClientID, int(args[1]), int(args[2]), int(args[3]), int(args[4]), int(args[5]))
+            elif self.args[0] == 'ship_sell':
+                server.ship_sell(self.ClientID, int(args[1]), int(args[2]), int(args[3]), int(args[4]), int(args[5]))
             else:
-                out = MsgQuery('Unknown query', [])
+                out = MsgQuery('Unknown query', args)
         else:
             out = MsgQuery('Unknown query', [])
         if out is not None:
@@ -68,25 +72,28 @@ class MsgQuery(clientserver.ClientServerMsg):
                 client.PendingQueries.remove(info['GID'])
             except KeyError:
                 pass
-        if querytype == 'entities':
+        elif querytype == 'entities':
             client.EntityList = payload
             print(payload)
-        if querytype == 'locations':
+        elif querytype == 'locations':
             client.LocationList = payload
             for info in client.LocationList:
                 GID, name = info.split(':')
                 client.PlanetDict[int(GID)] = name
-        if querytype == 'getship':
+        elif querytype == 'getship':
             client.SelectedShipGID = int(payload[0])
             print('Ship GID:', client.SelectedShipGID)
-        if querytype == 'getspace':
+        elif querytype == 'getspace':
             client.SpaceID = int(payload[0])
             print('Space ID: ', client.SpaceID)
-        if querytype == 'getcommodities':
+        elif querytype == 'getcommodities':
             client.CommodityDict = {}
             for GID, name in payload:
                 client.CommodityDict[name] = GID
+                client.CommodityDict[GID] = name
             print(client.CommodityDict)
+        else:
+            raise ValueError(f'Unknown message: {querytype} {payload}')
 
 class GameClient(simulation.Client):
     """
@@ -225,15 +232,39 @@ class SpaceSimulation(base_simulation.BaseSimulation):
         # This looks strange, but we say that we start at Orth and are heading to Orth. Loter on,
         # may need to spawn ships in transit, so need the flexibility
         ship = agent_based_macro.base_simulation_agents.TravellingAgent('ship', orth.Coordinates, orth.GID,
+                                                                        money_balance=500,
                                                                         travelling_to_id=orth.GID, speed=1.)
         self.add_entity(ship)
         # This is a bit of a hack
         self.ShipGID = ship.GID
+        self.PlayerGID.add(ship.GID)
 
     def MoveShip(self, clientID, shipID, locID):
         # Eventually, need to validate that the client has the right to move the ship
         ship = self.EntityList[shipID]
         ship.start_moving(locID, self.Time)
+
+
+    def ship_buy(self, client_ID, ship_ID, planet_id, commodity_id, price, amount):
+        ent = self.get_entity(ship_ID)
+        # Force an update of location
+        ent.get_coordinates(self.Time)
+        if not ent.LocationID == planet_id:
+            raise ValueError('invalid order')
+        event = simulation.ActionEvent(ship_ID, ent.event_buy, self.Time, None, commodity_id, price, amount)
+        simulation.queue_event(event)
+
+    def ship_sell(self, client_ID, ship_ID, planet_id, commodity_id, price, amount):
+        ent = self.get_entity(ship_ID)
+        # Force an update of location
+        ent.get_coordinates(self.Time)
+        if not ent.LocationID == planet_id:
+            raise ValueError('invalid order')
+        event = simulation.ActionEvent(ship_ID, ent.event_sell, self.Time, None, commodity_id, price, amount)
+        simulation.queue_event(event)
+
+    def event_send_invalid_action(self, *args):
+        print('Bad action', args)
 
 
 def build_sim():
