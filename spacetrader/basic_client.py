@@ -96,7 +96,7 @@ class BasicClient(space_simulation_build.GameClient):
                 inventory_msg = self.planet_font.render(txt, True, (240, 240, 240))
                 self.Screen.blit(inventory_msg, (800, pos))
             pos += 18
-            size_msg = self.planet_font.render(f'Trade Size = x{self.OrderSize}', True, (0, 0, 255))
+            size_msg = self.planet_font.render(f'Trade Size = x{self.OrderSize}', True, (128, 128, 255))
             self.Screen.blit(size_msg, (800, pos))
         except KeyError:
             pass

@@ -170,8 +170,13 @@ class SpaceSimulation(base_simulation.BaseSimulation):
                      )
         name_lookup = {}
         # Log of all transactions. If we do not open the log, log messages are not processed.
-        self.open_log('transactions', 'transactions.txt')
-
+        log_transactions = False
+        if log_transactions:
+            self.open_log('transactions', 'transactions.txt')
+        else:
+            # Clear out transactions.txt if we are not logging so we don't get confused by an out of date log
+            f = open('transactions.txt', 'w')
+            f.close()
         for loc, coords, productivity, num_producers in locations:
             obj = base_simulation.Planet(loc, coords)
             # Temporarily store planet names for setup
