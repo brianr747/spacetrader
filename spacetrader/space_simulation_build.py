@@ -276,7 +276,7 @@ class SpaceSimulation(base_simulation.BaseSimulation):
         ent.get_coordinates(self.Time)
         if not ent.LocationID == planet_id:
             raise ValueError('invalid order')
-        event = simulation.ActionEvent(ship_ID, ent.event_buy, self.Time, None, commodity_id=commodity_id,
+        event = simulation.Event(ship_ID, ent.event_buy, self.Time, None, commodity_id=commodity_id,
                                        price=price, amount=amount)
         simulation.queue_event(event)
 
@@ -286,7 +286,7 @@ class SpaceSimulation(base_simulation.BaseSimulation):
         ent.get_coordinates(self.Time)
         if not ent.LocationID == planet_id:
             raise ValueError('invalid order')
-        event = simulation.ActionEvent(ship_ID, ent.event_sell, self.Time, None, commodity_id=commodity_id,
+        event = simulation.Event(ship_ID, ent.event_sell, self.Time, None, commodity_id=commodity_id,
                                        price=price, amount=amount)
         simulation.queue_event(event)
 
