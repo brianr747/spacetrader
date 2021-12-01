@@ -3,6 +3,10 @@ Space Trader Game using agent_based_macro model.
 
 This is supposed to evolve into a space-trading game.
 
+**Full Loop With Provate Sector**
+Now have a private sector in the model. Absolute minimum logic. Currently refactoring 
+the code to simplify things so that it is easier to add new behaviour.
+
 **Initial Client Update**
 It is now possible to actually do some trading.
 
