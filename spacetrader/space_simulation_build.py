@@ -11,7 +11,7 @@ from agent_based_macro import clientserver as clientserver
 
 
 class MsgQuery(clientserver.ClientServerMsg):
-    def server_command(self, server, *args):
+    def server_command(self, server, **kwargs):
         """
         This class implements the protocol for passing messages between client and server. Both the client and
         server use this class, so that everything is mirrored in one place.
@@ -30,42 +30,47 @@ class MsgQuery(clientserver.ClientServerMsg):
         :return:
         """
         out = None
-        if len(self.args) > 0:
-            if self.args[0] == 'getinfo':
-                ent = server.get_entity(int(args[1]))
+        if 'query' in kwargs:
+            if kwargs['query'] == 'getinfo':
+                ent = server.get_entity(kwargs['GID'])
                 info = ent.get_representation()
-                out = MsgQuery('getinfo', info.__repr__())
-            elif self.args[0] == 'entities':
-                out = MsgQuery('entities', [f'{x.GID}: {x.Name} {x.Type}' for x in server.EntityList])
-            elif self.args[0] == 'locations':
-                out = MsgQuery('locations',
-                               [f'{server.get_entity(x).GID}:{server.get_entity(x).Name}' for x in server.Locations])
-            elif self.args[0] == 'getship':
-                out = MsgQuery('getship', [f'{server.ShipGID}', ])
-            elif self.args[0] == 'getspace':
-                out = MsgQuery('getspace', [f'{server.NonLocationID}', ])
-            elif self.args[0] == 'getcommodities':
+                out = MsgQuery(query='getinfo', response=info.__repr__())
+            elif kwargs['query'] == 'entities':
+                out = MsgQuery(query='entities', response=[f'{x.GID}: {x.Name} {x.Type}' for x in server.EntityList])
+            elif kwargs['query'] == 'locations':
+                out = MsgQuery(query='locations',
+                               response=[f'{server.get_entity(x).GID}:{server.get_entity(x).Name}' for x in server.Locations])
+            elif kwargs['query'] == 'getship':
+                out = MsgQuery(query='getship', response=[f'{server.ShipGID}', ])
+            elif kwargs['query'] == 'getspace':
+                out = MsgQuery(query='getspace', response=[f'{server.NonLocationID}', ])
+            elif kwargs['query'] == 'getcommodities':
                 commodities = []
                 for ent in server.EntityList:
                     if ent.Type == 'commodity':
                         commodities.append((ent.GID, ent.Name))
-                out = MsgQuery('getcommodities', commodities)
-            elif self.args[0] == 'moveship':
-                server.MoveShip(self.ClientID, int(args[1]), int(args[2]))
-            elif self.args[0] == 'ship_buy':
-                server.ship_buy(self.ClientID, int(args[1]), int(args[2]), int(args[3]), int(args[4]), int(args[5]))
-            elif self.args[0] == 'ship_sell':
-                server.ship_sell(self.ClientID, int(args[1]), int(args[2]), int(args[3]), int(args[4]), int(args[5]))
+                out = MsgQuery(query='getcommodities', response=commodities)
+            elif kwargs['query'] == 'moveship':
+                server.MoveShip(self.ClientID, shipID=int(kwargs['ship_id']),
+                                locID=int(kwargs['target']))
+            elif kwargs['query'] == 'ship_buy':
+                server.ship_buy(self.ClientID, int(kwargs['ship_id']), int(kwargs['planet_id']),
+                                int(kwargs['commodity_id']), int(kwargs['price']), int(kwargs['amount']))
+            elif kwargs['query'] == 'ship_sell':
+                server.ship_sell(self.ClientID,int(kwargs['ship_id']), int(kwargs['planet_id']),
+                                 int(kwargs['commodity_id']), int(kwargs['price']), int(kwargs['amount']))
             else:
-                out = MsgQuery('Unknown query', args)
+                out = MsgQuery(query='Unknown query', response=kwargs)
         else:
-            out = MsgQuery('Unknown query', [])
+            out = MsgQuery(query='Unknown query')
         if out is not None:
             out.ClientID = self.ClientID
             server.queue_message(out)
 
-    def client_message(self, client, querytype, payload):
-        if querytype == 'getinfo':
+    def client_message(self, client, **kwargs):
+        querytype = kwargs['query']
+        payload = kwargs['response']
+        if  querytype == 'getinfo':
             info = ast.literal_eval(payload)
             client.EntityInfo[info['GID']] = info
             try:
@@ -126,7 +131,7 @@ class GameClient(simulation.Client):
         """
         if GID in self.PendingQueries:
             return
-        self.send_command(MsgQuery('getinfo', GID))
+        self.send_command(MsgQuery(query='getinfo', GID=GID))
         self.PendingQueries.add(GID)
 
 
@@ -256,7 +261,8 @@ class SpaceSimulation(base_simulation.BaseSimulation):
         ent.get_coordinates(self.Time)
         if not ent.LocationID == planet_id:
             raise ValueError('invalid order')
-        event = simulation.ActionEvent(ship_ID, ent.event_buy, self.Time, None, commodity_id, price, amount)
+        event = simulation.ActionEvent(ship_ID, ent.event_buy, self.Time, None, commodity_id=commodity_id,
+                                       price=price, amount=amount)
         simulation.queue_event(event)
 
     def ship_sell(self, client_ID, ship_ID, planet_id, commodity_id, price, amount):
@@ -265,7 +271,8 @@ class SpaceSimulation(base_simulation.BaseSimulation):
         ent.get_coordinates(self.Time)
         if not ent.LocationID == planet_id:
             raise ValueError('invalid order')
-        event = simulation.ActionEvent(ship_ID, ent.event_sell, self.Time, None, commodity_id, price, amount)
+        event = simulation.ActionEvent(ship_ID, ent.event_sell, self.Time, None, commodity_id=commodity_id,
+                                       price=price, amount=amount)
         simulation.queue_event(event)
 
     def event_send_invalid_action(self, *args):

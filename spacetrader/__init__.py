@@ -24,12 +24,12 @@ def main():
     client.SetScreen(screen)
     clock = pygame.time.Clock()
     client.send_command(agent_based_macro.clientserver.MsgTimeQuery())
-    client.send_command(simulation_build.MsgQuery('entities'))
-    client.send_command(simulation_build.MsgQuery('locations'))
+    client.send_command(simulation_build.MsgQuery(query='entities'))
+    client.send_command(simulation_build.MsgQuery(query='locations'))
     # One time queries to get the ship ID, the ID for space ("non-location"), commodities
-    client.send_command(simulation_build.MsgQuery('getship'))
-    client.send_command(simulation_build.MsgQuery('getspace'))
-    client.send_command(simulation_build.MsgQuery('getcommodities'))
+    client.send_command(simulation_build.MsgQuery(query='getship'))
+    client.send_command(simulation_build.MsgQuery(query='getspace'))
+    client.send_command(simulation_build.MsgQuery(query='getcommodities'))
     font = pygame.font.SysFont(pygame.font.get_default_font(), 20)
     # Paused is fixed text
     label_paused = font.render('Game Paused', True, (255, 255, 0))

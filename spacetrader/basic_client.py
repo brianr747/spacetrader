@@ -39,7 +39,8 @@ class BasicClient(space_simulation_build.GameClient):
                 for GID in self.PlanetDict.keys():
                     if (not(ship_loc) == GID) and (not self.PlanetDict[GID] == 'Space'):
                         target = GID
-                self.send_command(space_simulation_build.MsgQuery('moveship', self.SelectedShipGID, target))
+                self.send_command(space_simulation_build.MsgQuery(query='moveship', ship_id=self.SelectedShipGID,
+                                                                  target=target))
             if event.key == pygame.K_b:
                 if self.PlanetDict[self.SelectedShipPlanet] == 'Space':
                     return
@@ -49,9 +50,11 @@ class BasicClient(space_simulation_build.GameClient):
                     return
                 price = self.SelectedAsk
                 amount = self.OrderSize
-                self.send_command(space_simulation_build.MsgQuery('ship_buy', self.SelectedShipGID,
-                                                                  self.SelectedShipPlanet, self.SelectedCommodity,
-                                                                  price, amount))
+                self.send_command(space_simulation_build.MsgQuery(query='ship_buy',
+                                                                  ship_id=self.SelectedShipGID,
+                                                                  planet_id=self.SelectedShipPlanet,
+                                                                  commodity_id=self.SelectedCommodity,
+                                                                  price=price, amount=amount))
             if event.key == pygame.K_s:
                 if self.PlanetDict[self.SelectedShipPlanet] == 'Space':
                     return
@@ -61,9 +64,10 @@ class BasicClient(space_simulation_build.GameClient):
                     return
                 price = self.SelectedBid
                 amount = self.OrderSize
-                self.send_command(space_simulation_build.MsgQuery('ship_sell', self.SelectedShipGID,
-                                                                  self.SelectedShipPlanet, self.SelectedCommodity,
-                                                                  price, amount))
+                self.send_command(space_simulation_build.MsgQuery(query='ship_sell', ship_id=self.SelectedShipGID,
+                                                                  planet_id=self.SelectedShipPlanet,
+                                                                  commodity_id=self.SelectedCommodity,
+                                                                  price=price, amount=amount))
             if event.key == pygame.K_PERIOD:
                 if self.OrderSize == 1:
                     self.OrderSize = 10
@@ -161,7 +165,7 @@ class BasicClient(space_simulation_build.GameClient):
             self.planet_font = pygame.font.SysFont(pygame.font.get_default_font(), 20)
         for GID, name in self.PlanetDict.items():
             if GID not in self.EntityInfo:
-                self.send_command(space_simulation_build.MsgQuery('getinfo', GID))
+                self.send_command(space_simulation_build.MsgQuery(query='getinfo', GID=GID))
                 # In order to avoid spamming this getinfo() request, stick an empty entry in the EntityInfo
                 self.EntityInfo[GID] = {}
             else:
