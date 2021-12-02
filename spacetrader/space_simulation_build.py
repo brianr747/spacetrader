@@ -291,7 +291,7 @@ class SpaceSimulation(base_simulation.BaseSimulation):
         simulation.queue_event(event)
 
     def event_send_invalid_action(self, *args):
-        print('Bad action', args)
+        print('Bad callback', args)
 
 
 def build_sim():
