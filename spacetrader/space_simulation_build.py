@@ -267,7 +267,9 @@ class SpaceSimulation(base_simulation.BaseSimulation):
     def MoveShip(self, clientID, shipID, locID):
         # Eventually, need to validate that the client has the right to move the ship
         ship = self.EntityList[shipID]
-        ship.start_moving(locID, self.Time)
+        event = simulation.Event(shipID, ship.event_start_moving, self.Time, None, event_type='move_ship',
+                                 new_target=locID, ttime=self.Time)
+        simulation.queue_event(event)
 
 
     def ship_buy(self, client_ID, ship_ID, planet_id, commodity_id, price, amount):
@@ -276,8 +278,8 @@ class SpaceSimulation(base_simulation.BaseSimulation):
         ent.get_coordinates(self.Time)
         if not ent.LocationID == planet_id:
             raise ValueError('invalid order')
-        event = simulation.Event(ship_ID, ent.event_buy, self.Time, None, commodity_id=commodity_id,
-                                       price=price, amount=amount)
+        event = simulation.Event(ship_ID, ent.event_buy, self.Time, None, event_type='buy',
+                                 commodity_id=commodity_id, price=price, amount=amount)
         simulation.queue_event(event)
 
     def ship_sell(self, client_ID, ship_ID, planet_id, commodity_id, price, amount):
@@ -286,8 +288,8 @@ class SpaceSimulation(base_simulation.BaseSimulation):
         ent.get_coordinates(self.Time)
         if not ent.LocationID == planet_id:
             raise ValueError('invalid order')
-        event = simulation.Event(ship_ID, ent.event_sell, self.Time, None, commodity_id=commodity_id,
-                                       price=price, amount=amount)
+        event = simulation.Event(ship_ID, ent.event_sell, self.Time, None, event_type='sell',
+                                 commodity_id=commodity_id, price=price, amount=amount)
         simulation.queue_event(event)
 
     def event_send_invalid_action(self, *args):
