@@ -20,6 +20,7 @@ import time
 import agent_based_macro.base_simulation_agents
 import agent_based_macro.entity
 from agent_based_macro import simulation as simulation
+from agent_based_macro.simulation import Event, Action, ActionDataRequestHolder
 
 from agent_based_macro import base_simulation as base_simulation
 from agent_based_macro import clientserver as clientserver
@@ -51,7 +52,7 @@ class MsgQuery(clientserver.ClientServerMsg):
                 info = ent.get_representation()
                 out = MsgQuery(query='getinfo', response=info.__repr__())
             elif kwargs['query'] == 'entities':
-                out = MsgQuery(query='entities', response=[f'{x.GID}: {x.Name} {x.Type}' for x in server.EntityList])
+                out = MsgQuery(query='entities', response=[f'{x.GID} {x.Name} {x.Type}' for x in server.EntityList])
             elif kwargs['query'] == 'locations':
                 out = MsgQuery(query='locations',
                                response=[f'{server.get_entity(x).GID}:{server.get_entity(x).Name}' for x in server.Locations])
@@ -168,6 +169,7 @@ class GameClient(simulation.Client):
                             self.QueryInfo(GID)
 
 
+
 class SpaceSimulation(base_simulation.BaseSimulation):
     def __init__(self):
         super().__init__()
@@ -263,6 +265,18 @@ class SpaceSimulation(base_simulation.BaseSimulation):
         # This is a bit of a hack
         self.ShipGID = ship.GID
         self.PlayerGID.add(ship.GID)
+        # Dump all the registered information
+        print('='*80)
+        print('REGISTERED KEYWORDS')
+        print('Actions')
+        Action().dump_registered()
+        print('-'*80)
+        print('Events')
+        Event(None, None, None, None).dump_registered()
+        print('-'*80)
+        print('Action Data Requests')
+        ActionDataRequestHolder().dump_registered()
+        print('='*80)
 
     def MoveShip(self, clientID, shipID, locID):
         # Eventually, need to validate that the client has the right to move the ship
@@ -292,8 +306,18 @@ class SpaceSimulation(base_simulation.BaseSimulation):
                                  commodity_id=commodity_id, price=price, amount=amount)
         simulation.queue_event(event)
 
-    def event_send_invalid_action(self, *args):
-        print('Bad callback', args)
+    def event_send_invalid_action(self, **kwargs):
+        """
+        This is an event that should not normally happen during a pure simulation: someone is attempting an invalid
+        action. This will happen in a game situation: the server is authoritative, and the client will not be
+        duplicating validation code. The simulation needs to be aware of the messaging protocol, which the base
+        simulation does not.
+
+        :param kwargs:
+        :return:
+        """
+        print('User made an invalid action, will need to handle messaging')
+        print('Bad callback', kwargs)
 
 
 def build_sim():

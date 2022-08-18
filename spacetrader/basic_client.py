@@ -36,7 +36,7 @@ class BasicClient(space_simulation_build.GameClient):
         self.OrderSize = 1
 
 
-    def SetScreen(self, screen):
+    def set_screen(self, screen):
         self.ScreenSize = screen.get_size()
         self.Screen = screen
 
@@ -88,9 +88,25 @@ class BasicClient(space_simulation_build.GameClient):
                     self.OrderSize = 10
                 else:
                     self.OrderSize = 1
+            if event.key == pygame.K_2:
+                self.Mode = 'Entities'
+            if event.key == pygame.K_1:
+                self.Mode = 'DrawPlanets'
+            if event.key == pygame.K_3:
+                self.Mode = 'MarketScreen'
 
 
-    def DrawScreenState(self):
+    def draw_screen_state(self):
+        if self.Mode == 'DrawPlanets':
+            self.draw_screen_planets()
+        elif self.Mode == 'Entities':
+            self.draw_screen_entities()
+        elif self.Mode == 'MarketScreen':
+            self.draw_market_screen()
+        else:
+            raise ValueError(f'Unknown client mode: {self.Mode}')
+
+    def draw_screen_planets(self):
         screen_size = self.ScreenSize
         mid_point = (screen_size[0]/2, screen_size[1]/2)
         x_scale = 200
@@ -194,5 +210,108 @@ class BasicClient(space_simulation_build.GameClient):
                 if name not in self.text_bitmaps:
                     self.text_bitmaps[name] = self.planet_font.render(name, False, (240, 240, 240))
                 self.Screen.blit(self.text_bitmaps[name], (screen_x, screen_y))
+
+    def draw_screen_entities(self):
+        num_entities = len(self.EntityList)
+        msg = self.planet_font.render(f'Num Entities {num_entities}', True, (240, 240, 0))
+        self.Screen.blit(msg, (20, 10))
+        y = 30
+        for i in range(0,num_entities):
+            info = self.EntityList[i].split(' ')
+            if info[2] == 'agent':
+                gid = int(info[0])
+                txt = self.EntityList[i]
+                try:
+                    entity_info = self.EntityInfo[gid]
+                    txt += " "+ repr(entity_info)
+                except KeyError:
+                    pass
+                msg = self.planet_font.render(txt, True, (220, 220, 220))
+                self.Screen.blit(msg, (20, y))
+                y += 20
+
+    def draw_market_screen(self):
+        msg = self.planet_font.render(f'Market Orders', True, (240, 240, 0))
+        self.Screen.blit(msg, (20, 10))
+        loc_ID = None
+        try:
+            loc_ID = self.EntityInfo[self.SelectedShipGID]['Location']
+            loc_name = self.PlanetDict[int(loc_ID)]
+            # Draw Landed Location at top
+            self.Screen.blit(self.text_bitmaps[loc_name], (100, 30))
+        except KeyError:
+            # Cannot do much
+            return
+        if loc_ID in self.MarketLookup:
+            # Eventually, need to change target commodity
+            fud_ID = self.CommodityDict['Fud']
+            self.SelectedCommodity = fud_ID
+            line_height = 18
+            if fud_ID in self.MarketLookup[loc_ID]:
+                market_ID = self.MarketLookup[loc_ID][fud_ID]
+                ent = self.EntityInfo[market_ID]
+                keyz = list(ent.keys())
+                keyz.sort()
+                pos = 60
+                for k in keyz:
+                    if k in ('BuyQueue', 'SellQueue'):
+                        continue
+                    txt = f'{k} = {ent[k]}'
+                    msg = self.planet_font.render(txt, True, (220, 220, 200))
+                    self.Screen.blit(msg, (100, pos))
+                    pos += line_height
+                pos = 60
+                txt = 'Sell Orders'
+                msg = self.planet_font.render(txt, True, (220, 220, 200))
+                self.Screen.blit(msg, (300, pos))
+                pos += line_height
+                if len(ent['SellQueue']) == 0:
+                    txt = '---'
+                    msg = self.planet_font.render(txt, True, (220, 220, 200))
+                    self.Screen.blit(msg, (300, pos))
+                    pos += line_height
+                else:
+                    queue = ent['SellQueue']
+                    N = min(10, len(queue))
+                    if N > 10:
+                        txt = '+ More Orders'
+                        msg = self.planet_font.render(txt, True, (220, 220, 200))
+                        self.Screen.blit(msg, (300, pos))
+                        pos += line_height
+                    for i in range(N, 0, -1):
+                        x = queue[i-1]
+                        txt = f'{x[1]} @ {x[0]}   ({x[2]})'
+                        msg = self.planet_font.render(txt, True, (220, 220, 200))
+                        self.Screen.blit(msg, (300, pos))
+                        pos += line_height
+                pos += 10
+                txt = 'Buy Orders'
+                msg = self.planet_font.render(txt, True, (220, 220, 200))
+                self.Screen.blit(msg, (300, pos))
+                pos += line_height
+                queue = ent['BuyQueue']
+                N = len(queue)
+                if N == 0:
+                    txt = '---'
+                    msg = self.planet_font.render(txt, True, (220, 220, 200))
+                    self.Screen.blit(msg, (300, pos))
+                    pos += line_height
+                else:
+                    for x in queue[0:min(N,10)]:
+                        txt = f'{x[1]} @ {x[0]}   ({x[2]})'
+                        msg = self.planet_font.render(txt, True, (220, 220, 200))
+                        self.Screen.blit(msg, (300, pos))
+                        pos += line_height
+                    if N > 10:
+                        txt = '+ More Orders'
+                        msg = self.planet_font.render(txt, True, (220, 220, 200))
+                        self.Screen.blit(msg, (300, pos))
+                        pos += line_height
+
+
+
+
+
+
 
 

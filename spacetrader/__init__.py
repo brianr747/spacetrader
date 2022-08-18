@@ -42,7 +42,7 @@ def main():
     background = pygame.Surface(screen.get_size())
     background = background.convert()
     background.fill((0,0,0))
-    client.SetScreen(screen)
+    client.set_screen(screen)
     clock = pygame.time.Clock()
     client.send_command(agent_based_macro.clientserver.MsgTimeQuery())
     client.send_command(simulation_build.MsgQuery(query='entities'))
@@ -101,7 +101,7 @@ def main():
             cnt += 1
         proc_count = .95 * proc_count + .05 * float(cnt)
         screen.blit(background, (0,0))
-        client.DrawScreenState()
+        client.draw_screen_state()
         label_prc = font.render(f'{int(proc_count)}', True, (200, 200, 200))
         screen.blit(label_prc, (5, 600))
         # This time state code should move to the client.
